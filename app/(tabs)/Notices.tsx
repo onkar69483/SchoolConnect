@@ -11,9 +11,9 @@ import {
 } from "react-native";
 import axios from "axios";
 import DatePicker from "react-native-date-picker";
-import { LinearGradient } from "expo-linear-gradient";
+import Icon from '@expo/vector-icons/Ionicons'; // Importing Ionicons
 
-const API_URL = "https://school-connect-server.vercel.app"
+const API_URL = "https://school-connect-server.vercel.app";
 
 interface Notice {
     _id: string;
@@ -33,6 +33,7 @@ const Notices: React.FC = () => {
     const [currentNoticeId, setCurrentNoticeId] = useState<string | null>(null);
     const [date, setDate] = useState(new Date());
     const [open, setOpen] = useState(false);
+    const [role, setRole] = useState<string>("teacher"); // Change this to "teacher" or "student" as needed
 
     useEffect(() => {
         const fetchNotices = async () => {
@@ -155,50 +156,36 @@ const Notices: React.FC = () => {
                     })}\nTime: ${item.time}`}
                 </Text>
             </View>
-            <View style={styles.noticeDateContainer}>
-                <Text style={styles.noticeDate}>
-                    {new Date(item.date).toISOString().split('T')[0]}
-                </Text>
-                <Text style={styles.noticeTime}>
-                    {new Date(item.date).toLocaleTimeString([], {
-                        hour: '2-digit',
-                        minute: '2-digit',
-                        hour12: true,
-                    })}
-                </Text>
+            {role === "teacher" && (
                 <View style={styles.noticeButtonContainer}>
-                    <TouchableOpacity
-                        style={styles.editButton}
-                        onPress={() => handleEditClick(item)}
-                    >
-                        <Text style={styles.buttonText}>Edit</Text>
+                    <TouchableOpacity onPress={() => handleEditClick(item)}>
+                        <Icon name="create-outline" size={16} color="#007BFF" style={styles.icon} />
                     </TouchableOpacity>
-                    <TouchableOpacity
-                        style={styles.deleteButton}
-                        onPress={() => handleDelete(item._id)}
-                    >
-                        <Text style={styles.noticeButtonText}>Delete</Text>
+                    <TouchableOpacity onPress={() => handleDelete(item._id)}>
+                        <Icon name="trash-outline" size={16} color="#F44336" style={styles.icon} />
                     </TouchableOpacity>
                 </View>
-            </View>
+            )}
         </View>
     );
 
     return (
-        <LinearGradient colors={["#1c1c1c", "#1c1c1c"]} style={styles.container}>
+        <View style={styles.container}>
             <Text style={styles.header}>Notice Board</Text>
             <FlatList
                 data={notices}
                 keyExtractor={(item) => item._id}
                 renderItem={renderNoticeItem}
             />
-            <View style={styles.buttonContainer}>
-                <Button
-                    title="Add Notice"
-                    onPress={() => setModalVisible(true)}
-                    color="#007BFF"
-                />
-            </View>
+            {role === "teacher" && (
+                <View style={styles.addButtonContainer}>
+                    <Button
+                        title="Add Notice"
+                        onPress={() => setModalVisible(true)}
+                        color="#007BFF"
+                    />
+                </View>
+            )}
 
             <Modal
                 visible={modalVisible}
@@ -265,7 +252,7 @@ const Notices: React.FC = () => {
                     </View>
                 </View>
             </Modal>
-        </LinearGradient>
+        </View>
     );
 };
 
@@ -273,56 +260,58 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         padding: 16,
-        backgroundColor: "#000000",
+        backgroundColor: "#FFFFFF",
     },
     header: {
-        fontSize: 24,
+        fontSize: 28,
         fontWeight: "bold",
         marginBottom: 16,
-        color: "#FFFFFF",
+        color: "#333333",
+        textAlign: "center",
     },
     noticeItem: {
         flexDirection: "row",
         justifyContent: "space-between",
-        alignItems: "center",
+        alignItems: "flex-start",
         padding: 16,
         marginVertical: 8,
         borderWidth: 1,
-        borderColor: "#333333",
-        borderRadius: 8,
-        backgroundColor: "#2b2b2b",
+        borderColor: "#DDDDDD",
+        borderRadius: 12,
+        backgroundColor: "#F8F8F8",
+        shadowColor: "#000",
+        shadowOffset: {
+            width: 0,
+            height: 2,
+        },
+        shadowOpacity: 0.2,
+        shadowRadius: 4,
+        elevation: 1,
     },
     noticeContentContainer: {
         flex: 1,
+        marginRight: 10,
     },
     noticeTitle: {
         fontSize: 18,
         fontWeight: "bold",
-        color: "#FFFFFF",
+        color: "#333333",
     },
     noticeContent: {
-        fontSize: 14,
-        color: "#CCCCCC",
-        marginTop: 8,
+        fontSize: 16,
+        color: "#555555",
+        marginTop: 4,
     },
-    noticeDateContainer: {
-        alignItems: "flex-end",
+    noticeButtonContainer: {
+        flexDirection: "row",
+        alignItems: "center",
     },
-    noticeDate: {
-        fontSize: 12,
-        color: "#AAAAAA",
+    icon: {
+        marginHorizontal: 4, // Space between icons
     },
-    noticeTime: {
-        fontSize: 12,
-        color: "#AAAAAA",
-    },
-    eventDateTime: {
-        paddingTop: 8,
-        color: "#AAAAAA",
-    },
-    buttonContainer: {
+    addButtonContainer: {
         marginTop: 16,
-        backgroundColor: "#000000",
+        backgroundColor: "#007BFF",
         borderRadius: 8,
         overflow: "hidden",
     },
@@ -330,29 +319,31 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: "center",
         alignItems: "center",
-        backgroundColor: "rgba(0, 0, 0, 0.7)",
+        backgroundColor: "rgba(0, 0, 0, 0.8)",
     },
     modalContent: {
-        width: "80%",
-        backgroundColor: "#333333",
-        padding: 20,
-        borderRadius: 10,
+        width: "85%",
+        backgroundColor: "#FFFFFF",
+        padding: 30,
+        borderRadius: 12,
+        elevation: 4,
     },
     modalTitle: {
-        fontSize: 20,
+        fontSize: 22,
         fontWeight: "bold",
-        color: "#FFFFFF",
-        marginBottom: 10,
+        color: "#333333",
+        marginBottom: 15,
+        textAlign: "center",
     },
     input: {
         width: "100%",
-        padding: 10,
+        padding: 12,
         borderWidth: 1,
-        borderColor: "#555555",
+        borderColor: "#CCCCCC",
         borderRadius: 8,
-        backgroundColor: "#444444",
-        color: "#FFFFFF",
-        marginBottom: 10,
+        backgroundColor: "#F5F5F5",
+        color: "#333333",
+        marginBottom: 12,
     },
     textArea: {
         height: 100,
@@ -360,43 +351,30 @@ const styles = StyleSheet.create({
     },
     modalButtonContainer: {
         flexDirection: "row",
-        justifyContent: "space-between",
+        justifyContent: "space-around",
+        marginTop: 15,
     },
     modalButton: {
         flex: 1,
-        padding: 10,
+        padding: 12,
         marginHorizontal: 5,
         borderRadius: 8,
         alignItems: "center",
     },
     submitButton: {
-        backgroundColor: "#007BFF",
+        backgroundColor: "#28A745",
     },
     cancelButton: {
-        backgroundColor: "#444444",
+        backgroundColor: "#DC3545",
     },
     buttonText: {
         color: "#FFFFFF",
         fontWeight: "bold",
+        fontSize: 16,
     },
-    noticeButtonContainer: {
-        flexDirection: "row",
-        justifyContent: "space-between",
-        marginTop: 10,
-    },
-    editButton: {
-        backgroundColor: "#4CAF50",
-        padding: 10,
-        borderRadius: 5,
-    },
-    deleteButton: {
-        backgroundColor: "#F44336",
-        padding: 10,
-        borderRadius: 5,
-    },
-    noticeButtonText: {
-        color: "#fff",
-        textAlign: "center",
+    eventDateTime: {
+        paddingTop: 8,
+        color: "#777777",
     },
 });
 
