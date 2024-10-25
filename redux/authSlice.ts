@@ -3,7 +3,7 @@ import axios from 'axios';
 import { AuthState } from '@/types/auth';
 import * as SecureStore from 'expo-secure-store';
 
-const API_BASE_URL = 'https://krhh5ptj-8000.inc1.devtunnels.ms/api/auth';
+const API_BASE_URL = 'https://school-connect-server.vercel.app/api/auth';
 
 const initialState: AuthState = {
   user: null,
