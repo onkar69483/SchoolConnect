@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, Image, StyleSheet, TextInput, TouchableOpacity, ScrollView } from 'react-native';
-import { ThemedText } from '@/components/ThemedText';
+import { ThemedText } from '@/components/themedText';
 import { useThemeColor } from '@/hooks/useThemeColor';
 
 
