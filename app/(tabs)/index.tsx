@@ -1,10 +1,12 @@
-import { Image, StyleSheet, Platform, Animated, ScrollView, Dimensions, TouchableOpacity, RefreshControl, StatusBar } from 'react-native';
+import { Image, StyleSheet, Platform, Animated, ScrollView, Dimensions, TouchableOpacity, RefreshControl, StatusBar, Modal, useColorScheme} from 'react-native';
 import { ThemedText } from '@/components/themedText';
 import { ThemedView } from '@/components/ThemedView';
 import axios from 'axios';
 import React, { useEffect, useState, useRef } from 'react';
 import { MaterialIcons, Ionicons, FontAwesome5 } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useDispatch } from 'react-redux';
+import { logoutUser } from '@/redux/authSlice';
 
 const { width } = Dimensions.get('window');
 
@@ -49,7 +51,86 @@ const COLORS = {
   accent3: '#EFF6FF',
 };
 
+const getLightColors = () => ({
+  primary: '#7C3AED',
+  secondary: '#9333EA',
+  calm: '#4F46E5',
+  success: '#059669',
+  warning: '#D97706',
+  background: '#FAFAFA',
+  surface: '#FFFFFF',
+  surfaceHover: '#F9FAFB',
+  text: '#1F2937',
+  textLight: '#6B7280',
+  textMuted: '#9CA3AF',
+  border: '#E5E7EB',
+  cardShadow: 'rgba(0, 0, 0, 0.05)',
+  accent1: '#F0FDFA',
+  accent2: '#FDF2F8',
+  accent3: '#EFF6FF',
+  modalOverlay: 'rgba(0, 0, 0, 0.5)',
+  iconBackground: '#F0FDFA',
+});
+
+const getDarkColors = () => ({
+  primary: '#936AFF',
+  secondary: '#A355FF',
+  calm: '#6D64FF',
+  success: '#10B981',
+  warning: '#F59E0B',
+  background: '#111827',
+  surface: '#1F2937',
+  surfaceHover: '#374151',
+  text: '#F9FAFB',
+  textLight: '#D1D5DB',
+  textMuted: '#9CA3AF',
+  border: '#374151',
+  cardShadow: 'rgba(0, 0, 0, 0.3)',
+  accent1: '#042F2E',
+  accent2: '#831843',
+  accent3: '#172554',
+  modalOverlay: 'rgba(0, 0, 0, 0.7)',
+  iconBackground: '#1F2937',
+});
+
+interface Profile {
+  name: string;
+  grade: string;
+  age: number;
+  guardianName: string;
+  contactNumber: string;
+  address: string;
+  bloodGroup: string;
+  emergencyContact: string;
+  studentId: string;
+  joinDate: string;
+}
+
+
 export default function SchoolDashboard() {
+  const dispatch = useDispatch();
+  const colorScheme = useColorScheme();
+  const COLORS = colorScheme === 'dark' ? getDarkColors() : getLightColors();
+
+  const handleLogout = () => {
+    dispatch(logoutUser());
+    // You can also add navigation to redirect after logout if needed
+  };
+  
+  const [isProfileVisible, setIsProfileVisible] = useState(false);
+  const [profile] = useState<Profile>({
+    name: 'Vishwajeet Singh',
+    grade: '8th Standard',
+    age: 13,
+    guardianName: 'Rajesh Singh',
+    contactNumber: '+91 98765 43210',
+    address: '123 Education Lane, School District',
+    bloodGroup: 'B+',
+    emergencyContact: '+91 98765 43211',
+    studentId: 'STU2024001',
+    joinDate: 'January 2024'
+  });
+
   const [currentTime, setCurrentTime] = useState(new Date());
   const [childProgress, setChildProgress] = useState<ChildProgress[]>([
     { id: '1', category: 'Academic Progress', progress: 75, lastActivity: 'Mathematics', mood: 'focused' },
@@ -103,6 +184,113 @@ export default function SchoolDashboard() {
       endMinute: 30
     }
   ]);
+
+  const ProfileModal = () => (
+    <Modal
+      animationType="slide"
+      transparent={true}
+      visible={isProfileVisible}
+      onRequestClose={() => setIsProfileVisible(false)}
+    >
+      <ThemedView style={[styles.modalOverlay, { backgroundColor: COLORS.modalOverlay }]}>
+        <ThemedView style={[styles.modalContent, { 
+          backgroundColor: COLORS.surface,
+          shadowColor: COLORS.cardShadow,
+        }]}>
+          <ThemedView style={styles.modalHeader}>
+            <TouchableOpacity 
+              style={[styles.closeButton, { backgroundColor: COLORS.surfaceHover }]}
+              onPress={() => setIsProfileVisible(false)}
+            >
+              <MaterialIcons name="close" size={24} color={COLORS.textLight} />
+            </TouchableOpacity>
+          </ThemedView>
+
+          <ThemedView style={styles.profileHeader}>
+            <Image
+              source={require('@/assets/images/profile.png')}
+              style={styles.profileImage}
+            />
+            <LinearGradient
+              colors={[COLORS.primary, COLORS.secondary]}
+              style={styles.editButton}
+            >
+              <MaterialIcons name="edit" size={20} color={COLORS.surface} />
+            </LinearGradient>
+          </ThemedView>
+
+          <ThemedText style={[styles.profileName, { color: COLORS.text }]}>{profile.name}</ThemedText>
+          <ThemedText style={[styles.profileGrade, { color: COLORS.textLight }]}>{profile.grade}</ThemedText>
+
+          <ScrollView style={styles.profileDetails}>
+            <ProfileInfoItem
+              icon="badge"
+              label="Student ID"
+              value={profile.studentId}
+            />
+            <ProfileInfoItem
+              icon="calendar-today"
+              label="Joined"
+              value={profile.joinDate}
+            />
+            <ProfileInfoItem
+              icon="person"
+              label="Age"
+              value={`${profile.age} years`}
+            />
+            <ProfileInfoItem
+              icon="family-restroom"
+              label="Guardian"
+              value={profile.guardianName}
+            />
+            <ProfileInfoItem
+              icon="phone"
+              label="Contact"
+              value={profile.contactNumber}
+            />
+            <ProfileInfoItem
+              icon="location-on"
+              label="Address"
+              value={profile.address}
+            />
+            <ProfileInfoItem
+              icon="water-drop"
+              label="Blood Group"
+              value={profile.bloodGroup}
+            />
+            <ProfileInfoItem
+              icon="emergency"
+              label="Emergency Contact"
+              value={profile.emergencyContact}
+            />
+          </ScrollView>
+
+          <TouchableOpacity 
+            style={[styles.logoutButton, { backgroundColor: colorScheme === 'dark' ? COLORS.accent2 : COLORS.accent2 }]}
+          >
+            <MaterialIcons name="logout" size={20} color={COLORS.warning} />
+            <ThemedText onPress={handleLogout} style={[styles.logoutText, { color: COLORS.warning }]}>Logout</ThemedText>
+          </TouchableOpacity>
+        </ThemedView>
+      </ThemedView>
+    </Modal>
+  );
+
+  const ProfileInfoItem: React.FC<{
+    icon: string;
+    label: string;
+    value: string;
+  }> = ({ icon, label, value }) => (
+    <ThemedView style={[styles.infoItem, { borderBottomColor: COLORS.border }]}>
+      <ThemedView style={[styles.infoIcon, { backgroundColor: COLORS.iconBackground }]}>
+        <MaterialIcons name={icon as any} size={20} color={COLORS.primary} />
+      </ThemedView>
+      <ThemedView style={styles.infoContent}>
+        <ThemedText style={[styles.infoLabel, { color: COLORS.textLight }]}>{label}</ThemedText>
+        <ThemedText style={[styles.infoValue, { color: COLORS.text }]}>{value}</ThemedText>
+      </ThemedView>
+    </ThemedView>
+  );
 
   // Update current time every minute
   useEffect(() => {
@@ -212,31 +400,36 @@ export default function SchoolDashboard() {
 
   return (
     <ScrollView 
-      style={styles.container}
+      style={[styles.container, { backgroundColor: COLORS.background }]}
       showsVerticalScrollIndicator={false}
     >
-      {/* Header */}
-      <ThemedView style={styles.header}>
+      <ThemedView style={[styles.header, { 
+        backgroundColor: COLORS.surface,
+        shadowColor: COLORS.cardShadow,
+      }]}>
         <ThemedView style={styles.headerContent}>
           <ThemedView style={styles.headerTop}>
-            <Image
-              source={require('@/assets/images/profile.png')}
-              style={styles.childAvatar}
-            />
+            <TouchableOpacity onPress={() => setIsProfileVisible(true)}>
+              <Image
+                source={require('@/assets/images/profile.png')}
+                style={styles.childAvatar}
+              />
+            </TouchableOpacity>
             <TouchableOpacity style={styles.helpButton}>
               <MaterialIcons name="notifications" size={24} color={COLORS.primary} />
             </TouchableOpacity>
           </ThemedView>
-          <ThemedText style={styles.welcomeText}>Hello, Vishwajeet!</ThemedText>
-          <ThemedText style={styles.subtitle}>Your School Day Overview</ThemedText>
+          <ThemedText style={[styles.welcomeText, { color: COLORS.text }]}>Hello, Vishwajeet!</ThemedText>
+          <ThemedText style={[styles.subtitle, { color: COLORS.textLight }]}>Your School Day Overview</ThemedText>
         </ThemedView>
       </ThemedView>
 
-      {/* Main Content */}
+      <ProfileModal />
+
       <ThemedView style={styles.content}>
         {/* Progress Section */}
         <ThemedView style={styles.section}>
-          <ThemedText style={styles.sectionTitle}>Today's Progress</ThemedText>
+          <ThemedText style={[styles.sectionTitle, { color: COLORS.text }]}>Today's Progress</ThemedText>
           <ScrollView 
             horizontal 
             showsHorizontalScrollIndicator={false}
@@ -251,8 +444,8 @@ export default function SchoolDashboard() {
         {/* School Schedule */}
         <ThemedView style={styles.section}>
           <ThemedView style={styles.sectionHeader}>
-            <ThemedText style={styles.sectionTitle}>School Schedule</ThemedText>
-            <ThemedText style={styles.currentTime}>
+            <ThemedText style={[styles.sectionTitle, { color: COLORS.text }]}>School Schedule</ThemedText>
+            <ThemedText style={[styles.currentTime, { color: COLORS.primary }]}>
               {currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
             </ThemedText>
           </ThemedView>
@@ -269,7 +462,7 @@ export default function SchoolDashboard() {
               style={styles.actionGradient}
             >
               <MaterialIcons name="message" size={24} color={COLORS.primary} />
-              <ThemedText style={styles.actionText}>Message Teacher</ThemedText>
+              <ThemedText style={[styles.actionText, { color: COLORS.text }]}>Message Teacher</ThemedText>
             </LinearGradient>
           </TouchableOpacity>
           <TouchableOpacity style={styles.actionButton}>
@@ -278,7 +471,7 @@ export default function SchoolDashboard() {
               style={styles.actionGradient}
             >
               <MaterialIcons name="assignment" size={24} color={COLORS.primary} />
-              <ThemedText style={styles.actionText}>View Homework</ThemedText>
+              <ThemedText style={[styles.actionText, { color: COLORS.text }]}>View Homework</ThemedText>
             </LinearGradient>
           </TouchableOpacity>
         </ThemedView>
@@ -288,8 +481,8 @@ export default function SchoolDashboard() {
           <ThemedView style={styles.supportContent}>
             <MaterialIcons name="help" size={32} color={COLORS.primary} />
             <ThemedView style={styles.supportText}>
-              <ThemedText style={styles.supportTitle}>Need Help?</ThemedText>
-              <ThemedText style={styles.supportSubtitle}>Contact school support</ThemedText>
+              <ThemedText style={[styles.supportTitle, { color: COLORS.text }]}>Need Help?</ThemedText>
+              <ThemedText style={[styles.supportSubtitle, { color: COLORS.textLight }]}>Contact school support</ThemedText>
             </ThemedView>
           </ThemedView>
           <MaterialIcons name="arrow-forward-ios" size={20} color={COLORS.textLight} />
@@ -513,5 +706,118 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: COLORS.textLight,
     marginTop: 2,
+  },
+  modalOverlay: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    width: width * 0.9,
+    maxHeight: '80%',
+    borderRadius: 24,
+    paddingVertical: 20,
+    ...Platform.select({
+      ios: {
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.1,
+        shadowRadius: 12,
+      },
+      android: {
+        elevation: 8,
+      },
+    }),
+  },
+  modalHeader: {
+    alignItems: 'flex-end',
+    paddingHorizontal: 20,
+    marginBottom: 10,
+  },
+  closeButton: {
+    padding: 8,
+    borderRadius: 20,
+  },
+  profileHeader: {
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  profileImage: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    marginBottom: 16,
+  },
+  editButton: {
+    position: 'absolute',
+    right: width * 0.25,
+    bottom: 12,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
+    ...Platform.select({
+      ios: {
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.2,
+        shadowRadius: 4,
+      },
+      android: {
+        elevation: 4,
+      },
+    }),
+  },
+  profileName: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    marginBottom: 4,
+  },
+  profileGrade: {
+    fontSize: 16,
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  profileDetails: {
+    paddingHorizontal: 20,
+  },
+  infoItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+  },
+  infoIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  infoContent: {
+    flex: 1,
+  },
+  infoLabel: {
+    fontSize: 14,
+    marginBottom: 2,
+  },
+  infoValue: {
+    fontSize: 16,
+    fontWeight: '500',
+  },
+  logoutButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 20,
+    paddingVertical: 12,
+    marginHorizontal: 20,
+    borderRadius: 12,
+  },
+  logoutText: {
+    marginLeft: 8,
+    fontSize: 16,
+    fontWeight: '600',
   },
 });
