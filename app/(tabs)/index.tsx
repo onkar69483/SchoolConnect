@@ -17,17 +17,6 @@ interface ChildProgress {
   mood?: string;
 }
 
-interface UserProfile {
-  name: string;
-  grade: string;
-  age: number;
-  parentName: string;
-  contactNumber: string;
-  address: string;
-  rollNumber: string;
-  bloodGroup: string;
-}
-
 interface SchoolRoutine {
   id: string;
   timeStart: string;
@@ -39,8 +28,6 @@ interface SchoolRoutine {
   endHour: number;
   endMinute: number;
 }
-
-
 
 // Same color palette for consistency
 const COLORS = {
