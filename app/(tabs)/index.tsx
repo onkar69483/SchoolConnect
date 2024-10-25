@@ -5,6 +5,8 @@ import axios from 'axios';
 import React, { useEffect, useState, useRef } from 'react';
 import { MaterialIcons, Ionicons, FontAwesome5 } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useDispatch } from 'react-redux';
+import { logoutUser } from '@/redux/authSlice';
 
 const { width } = Dimensions.get('window');
 
@@ -106,9 +108,14 @@ interface Profile {
 
 
 export default function SchoolDashboard() {
-
+  const dispatch = useDispatch();
   const colorScheme = useColorScheme();
   const COLORS = colorScheme === 'dark' ? getDarkColors() : getLightColors();
+
+  const handleLogout = () => {
+    dispatch(logoutUser());
+    // You can also add navigation to redirect after logout if needed
+  };
   
   const [isProfileVisible, setIsProfileVisible] = useState(false);
   const [profile] = useState<Profile>({
@@ -262,7 +269,7 @@ export default function SchoolDashboard() {
             style={[styles.logoutButton, { backgroundColor: colorScheme === 'dark' ? COLORS.accent2 : COLORS.accent2 }]}
           >
             <MaterialIcons name="logout" size={20} color={COLORS.warning} />
-            <ThemedText style={[styles.logoutText, { color: COLORS.warning }]}>Logout</ThemedText>
+            <ThemedText onPress={handleLogout} style={[styles.logoutText, { color: COLORS.warning }]}>Logout</ThemedText>
           </TouchableOpacity>
         </ThemedView>
       </ThemedView>
