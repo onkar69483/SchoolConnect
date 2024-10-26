@@ -12,6 +12,8 @@ import {
 import axios from "axios";
 import DatePicker from "react-native-date-picker";
 import Icon from '@expo/vector-icons/Ionicons'; // Importing Ionicons
+import * as Notifications from "expo-notifications";
+
 
 const API_URL = "https://school-connect-server.vercel.app";
 
@@ -128,6 +130,15 @@ const Notices: React.FC = () => {
                 );
 
                 if (response.status === 201) {
+                    await Notifications.scheduleNotificationAsync({
+                        content: {
+                            title: "New Notice Added!",
+                            body:
+                                newTitle ||
+                                "Check the latest notice on the board.",
+                        },
+                        trigger: { seconds: 10 },
+                    });
                     setNotices([...notices, response.data]);
                     setNewTitle("");
                     setNewNotice("");

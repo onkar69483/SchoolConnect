@@ -16,11 +16,12 @@
       "supportsTablet": true
     },
     "android": {
-      "adaptiveIcon": {
-        "foregroundImage": "./assets/images/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
-      },
-      "package": "com.diamondhead.SchoolConnect"
+        "adaptiveIcon": {
+            "foregroundImage": "./assets/images/adaptive-icon.png",
+            "backgroundColor": "#ffffff"
+        },
+        "package": "com.diamondhead.SchoolConnect",
+        "permissions": ["NOTIFICATIONS"]
     },
     "web": {
       "bundler": "metro",
