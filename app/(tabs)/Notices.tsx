@@ -12,6 +12,9 @@ import {
 import axios from "axios";
 import DatePicker from "react-native-date-picker";
 import Icon from '@expo/vector-icons/Ionicons'; // Importing Ionicons
+import * as Notifications from "expo-notifications";
+import { useSelector } from "react-redux";
+
 
 const API_URL = "https://school-connect-server.vercel.app";
 
@@ -33,7 +36,16 @@ const Notices: React.FC = () => {
     const [currentNoticeId, setCurrentNoticeId] = useState<string | null>(null);
     const [date, setDate] = useState(new Date());
     const [open, setOpen] = useState(false);
-    const [role, setRole] = useState<string>("teacher"); // Change this to "teacher" or "student" as needed
+    
+    // Access the user role from the Redux store
+    const role = useSelector((state: any) => state.auth.user?.role);
+
+    useEffect(() => {
+        // Perform any actions needed based on the role
+        console.log("User role:", role);
+    }, [role]);
+
+    // You can now use `userRole` directly in your component as needed
 
     useEffect(() => {
         const fetchNotices = async () => {
@@ -128,6 +140,15 @@ const Notices: React.FC = () => {
                 );
 
                 if (response.status === 201) {
+                    await Notifications.scheduleNotificationAsync({
+                        content: {
+                            title: "New Notice Added!",
+                            body:
+                                newTitle ||
+                                "Check the latest notice on the board.",
+                        },
+                        trigger: { seconds: 10 },
+                    });
                     setNotices([...notices, response.data]);
                     setNewTitle("");
                     setNewNotice("");
@@ -156,7 +177,7 @@ const Notices: React.FC = () => {
                     })}\nTime: ${item.time}`}
                 </Text>
             </View>
-            {role === "teacher" && (
+            {role === "Teacher" && (
                 <View style={styles.noticeButtonContainer}>
                     <TouchableOpacity onPress={() => handleEditClick(item)}>
                         <Icon name="create-outline" size={16} color="#007BFF" style={styles.icon} />
