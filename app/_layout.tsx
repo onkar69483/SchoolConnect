@@ -12,7 +12,7 @@ import { useColorScheme } from "@/hooks/useColorScheme";
 import { io } from "socket.io-client";
 import Constants from 'expo-constants';
 
-const API_URL = "https://krhh5ptj-8000.inc1.devtunnels.ms";
+const API_URL = "https://school-connect-server.up.railway.app";
 const socket = io(API_URL);
 
 SplashScreen.preventAutoHideAsync();
