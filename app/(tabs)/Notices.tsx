@@ -20,7 +20,7 @@ import { useSelector } from "react-redux";
 import { io } from "socket.io-client";
 import { useRouter } from "expo-router";
 
-const API_URL = "https://krhh5ptj-8000.inc1.devtunnels.ms";
+const API_URL = "https://school-connect-server.vercel.app";
 const socket = io(API_URL);
 
 interface Notice {
