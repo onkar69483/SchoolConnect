@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from "react";
+// Notices.tsx (client side)
+import React, { useState, useEffect, useCallback } from "react";
 import {
     View,
     Text,
@@ -8,15 +9,19 @@ import {
     TextInput,
     TouchableOpacity,
     Button,
+    AppState,
+    AppStateStatus,
 } from "react-native";
 import axios from "axios";
 import DatePicker from "react-native-date-picker";
-import Icon from '@expo/vector-icons/Ionicons'; // Importing Ionicons
+import Icon from '@expo/vector-icons/Ionicons';
 import * as Notifications from "expo-notifications";
 import { useSelector } from "react-redux";
-
+import { io } from "socket.io-client";
+import { useRouter } from "expo-router";
 
 const API_URL = "https://school-connect-server.vercel.app";
+const socket = io(API_URL);
 
 interface Notice {
     _id: string;
@@ -36,43 +41,109 @@ const Notices: React.FC = () => {
     const [currentNoticeId, setCurrentNoticeId] = useState<string | null>(null);
     const [date, setDate] = useState(new Date());
     const [open, setOpen] = useState(false);
-    
-    // Access the user role from the Redux store
+    const [appState, setAppState] = useState(AppState.currentState);
+
     const role = useSelector((state: any) => state.auth.user?.role);
 
+    const router = useRouter();
+
+    // Function to handle app state changes
+    const handleAppStateChange = useCallback((nextAppState: AppStateStatus) => {
+        if (appState.match(/inactive|background/) && nextAppState === 'active') {
+            // App has come to the foreground
+            socket.emit("fetch_notices");
+        }
+        setAppState(nextAppState);
+    }, [appState]);
+
     useEffect(() => {
-        // Perform any actions needed based on the role
-        console.log("User role:", role);
+        // Set up app state change listener
+        const subscription = AppState.addEventListener('change', handleAppStateChange);
+
+        // Set up notification listeners
+        const backgroundSubscription = Notifications.addNotificationResponseReceivedListener(
+            (response) => {
+                const noticeId = response.notification.request.content.data?.noticeId;
+                if (noticeId) {
+                    // Handle navigation to specific notice if needed
+                    router.push("/Notices"); 
+                }
+            }
+        );
+
+        const foregroundSubscription = Notifications.addNotificationReceivedListener(
+            async (notification) => {
+                // console.log('Foreground notification received:', notification);
+                // Optionally refresh notices when notification is received
+                socket.emit("fetch_notices");
+            }
+        );
+
+        return () => {
+            subscription.remove();
+            backgroundSubscription.remove();
+            foregroundSubscription.remove();
+        };
+    }, [handleAppStateChange]);
+
+    useEffect(() => {
+        // console.log("User role:", role);
     }, [role]);
 
-    // You can now use `userRole` directly in your component as needed
-
     useEffect(() => {
-        const fetchNotices = async () => {
-            try {
-                const response = await axios.get(`${API_URL}/api/notice`);
-                setNotices(response.data);
-            } catch (error) {
-                console.error("Error fetching notices:", error);
-            }
-        };
+        socket.emit("fetch_notices");
+        
+        socket.on("notices", (data: Notice[]) => {
+            setNotices(data);
+        });
 
-        fetchNotices();
+        socket.on("notice_added", async (newNotice: Notice) => {
+            setNotices((prevNotices) => [...prevNotices, newNotice]);
+            await sendPushNotification(newNotice);
+        });
+
+        socket.on("notice_updated", (updatedNotice: Notice) => {
+            setNotices((prevNotices) =>
+                prevNotices.map((notice) =>
+                    notice._id === updatedNotice._id ? updatedNotice : notice
+                )
+            );
+        });
+
+        socket.on("notice_deleted", (deletedNoticeId: string) => {
+            setNotices((prevNotices) =>
+                prevNotices.filter((notice) => notice._id !== deletedNoticeId)
+            );
+        });
+
+        return () => {
+            socket.off("notices");
+            socket.off("notice_added");
+            socket.off("notice_updated");
+            socket.off("notice_deleted");
+        };
     }, []);
 
-    const handleDelete = async (noticeId: string) => {
+    // Enhanced push notification function
+    const sendPushNotification = async (notice: Notice) => {
         try {
-            const response = await axios.delete(`${API_URL}/api/notice/${noticeId}`);
-            if (response.status === 200) {
-                setNotices(notices.filter((notice) => notice._id !== noticeId));
-                alert("Notice deleted successfully.");
-            } else {
-                alert("Failed to delete notice.");
-            }
+            await Notifications.scheduleNotificationAsync({
+                content: {
+                    title: notice.title,
+                    body: notice.notice,
+                    data: { noticeId: notice._id },
+                    sound: 'default',
+                    priority: 'high',
+                },
+                trigger: null, // Send immediately
+            });
         } catch (error) {
-            console.error("Error deleting notice:", error);
-            alert("An error occurred while deleting the notice.");
+            console.error('Error sending notification:', error);
         }
+    };
+
+    const handleDelete = (noticeId: string) => {
+        socket.emit("delete_notice", noticeId);
     };
 
     const handleEditClick = (notice: Notice) => {
@@ -84,40 +155,21 @@ const Notices: React.FC = () => {
         setModalVisible(true);
     };
 
-    const handleEdit = async () => {
+    const handleEdit = () => {
         if (newTitle && newNotice && currentNoticeId) {
             const updatedNotice = {
+                id: currentNoticeId,
                 title: newTitle,
                 notice: newNotice,
                 date: date.toISOString(),
                 time: date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
                 user: "66de790a1f34eeb2296addaa",
             };
-
-            try {
-                const response = await axios.put(
-                    `${API_URL}/api/notice/${currentNoticeId}`,
-                    updatedNotice
-                );
-
-                if (response.status === 200) {
-                    setNotices(
-                        notices.map((notice) =>
-                            notice._id === currentNoticeId ? response.data : notice
-                        )
-                    );
-                    setNewTitle("");
-                    setNewNotice("");
-                    setModalVisible(false);
-                    setEditMode(false);
-                    alert("Notice updated successfully.");
-                } else {
-                    alert(`Error: ${response.data.error}`);
-                }
-            } catch (err) {
-                console.error("Error updating notice:", err);
-                alert("An error occurred while updating the notice.");
-            }
+            socket.emit("edit_notice", updatedNotice);
+            setNewTitle("");
+            setNewNotice("");
+            setModalVisible(false);
+            setEditMode(false);
         } else {
             alert("Please fill in both the title and content.");
         }
@@ -133,33 +185,10 @@ const Notices: React.FC = () => {
                 user: "66de790a1f34eeb2296addaa",
             };
 
-            try {
-                const response = await axios.post(
-                    `${API_URL}/api/notice`,
-                    newNoticeItem
-                );
-
-                if (response.status === 201) {
-                    await Notifications.scheduleNotificationAsync({
-                        content: {
-                            title: "New Notice Added!",
-                            body:
-                                newTitle ||
-                                "Check the latest notice on the board.",
-                        },
-                        trigger: { seconds: 10 },
-                    });
-                    setNotices([...notices, response.data]);
-                    setNewTitle("");
-                    setNewNotice("");
-                    setModalVisible(false);
-                } else {
-                    alert(`Error: ${response.data.error}`);
-                }
-            } catch (err) {
-                console.error("Error posting notice:", err);
-                alert("An error occurred while adding the notice.");
-            }
+            socket.emit("add_notice", newNoticeItem);
+            setNewTitle("");
+            setNewNotice("");
+            setModalVisible(false);
         } else {
             alert("Please fill in both the title and content.");
         }
@@ -198,7 +227,7 @@ const Notices: React.FC = () => {
                 keyExtractor={(item) => item._id}
                 renderItem={renderNoticeItem}
             />
-            {role === "teacher" && (
+            {role === "Teacher" && (
                 <View style={styles.addButtonContainer}>
                     <Button
                         title="Add Notice"
