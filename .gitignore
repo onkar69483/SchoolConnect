@@ -22,6 +22,7 @@ node_modules/
 # @end expo-cli
 
 # Ignore Google Services file
-google-services.json
+# google-services.json
+school-connect-5e636-firebase-adminsdk-imftt-1bc3efa0b6.json
 
 .env

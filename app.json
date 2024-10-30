@@ -21,7 +21,8 @@
             "backgroundColor": "#ffffff"
         },
         "package": "com.diamondhead.SchoolConnect",
-        "permissions": ["NOTIFICATIONS"]
+        "permissions": ["NOTIFICATIONS"],
+        "googleServicesFile": "./google-services.json"
     },
     "web": {
       "bundler": "metro",
