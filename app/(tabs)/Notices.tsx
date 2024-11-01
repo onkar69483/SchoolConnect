@@ -13,9 +13,7 @@ import axios from "axios";
 import DatePicker from "react-native-date-picker";
 import Icon from '@expo/vector-icons/Ionicons'; // Importing Ionicons
 
-const API_URL = "https://school-connect-server.vercel.app";
-
-interface Notice {
+export interface Notice {
     _id: string;
     title: string;
     notice: string;
@@ -23,6 +21,8 @@ interface Notice {
     time: string;
     user: string;
 }
+
+export const API_URL = "https://school-connect-server.vercel.app";
 
 const Notices: React.FC = () => {
     const [notices, setNotices] = useState<Notice[]>([]);
@@ -128,6 +128,7 @@ const Notices: React.FC = () => {
                 );
 
                 if (response.status === 201) {
+                    console.log('New notice added:', response.data); // Debug log
                     setNotices([...notices, response.data]);
                     setNewTitle("");
                     setNewNotice("");
