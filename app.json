@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "School-Connect",
-    "slug": "School-Connect",
+    "name": "SchoolConnect",
+    "slug": "SchoolConnect",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
