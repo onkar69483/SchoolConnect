@@ -17,8 +17,10 @@ import axios from "axios";
 import React, { useEffect, useState, useRef } from "react";
 import { MaterialIcons, Ionicons, FontAwesome5 } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { logoutUser } from "@/redux/authSlice";
+import { RootState } from '@/types';
+import { UnknownAction } from '@reduxjs/toolkit';
 
 const { width } = Dimensions.get("window");
 
@@ -107,39 +109,37 @@ const getDarkColors = () => ({
 
 interface Profile {
     name: string;
-    grade: string;
     age: number;
-    guardianName: string;
-    contactNumber: string;
-    address: string;
-    bloodGroup: string;
+    role: string;
+    batch: string;
+    phone: string;
     emergencyContact: string;
-    studentId: string;
-    joinDate: string;
+    address: string;
+    username: string;
+    email: string;
 }
 
 export default function SchoolDashboard() {
     const dispatch = useDispatch();
+    const user = useSelector((state: RootState) => state.auth.user);
     const colorScheme = useColorScheme();
     const COLORS = colorScheme === "dark" ? getDarkColors() : getLightColors();
 
     const handleLogout = () => {
-        dispatch(logoutUser());
-        // You can also add navigation to redirect after logout if needed
+        dispatch(logoutUser() as unknown as UnknownAction);
     };
 
     const [isProfileVisible, setIsProfileVisible] = useState(false);
-    const [profile] = useState<Profile>({
-        name: "Vishwajeet Singh",
-        grade: "8th Standard",
-        age: 13,
-        guardianName: "Rajesh Singh",
-        contactNumber: "+91 98765 43210",
-        address: "123 Education Lane, School District",
-        bloodGroup: "B+",
-        emergencyContact: "+91 98765 43211",
-        studentId: "STU2024001",
-        joinDate: "January 2024",
+    const [profile, setProfile] = useState<Profile>({
+        name: user?.name || "N/A",
+        age: user?.age || 0,
+        role: user?.role || "N/A",
+        batch: user?.batch || "N/A",
+        phone: user?.phone || "N/A",
+        emergencyContact: user?.emergencyContact || "N/A",
+        address: user?.address || "N/A",
+        username: user?.username || "N/A",
+        email: user?.email || "N/A"
     });
 
     const [currentTime, setCurrentTime] = useState(new Date());
@@ -280,19 +280,19 @@ export default function SchoolDashboard() {
                             { color: COLORS.textLight },
                         ]}
                     >
-                        {profile.grade}
+                        {profile.role}
                     </ThemedText>
 
                     <ScrollView style={styles.profileDetails}>
                         <ProfileInfoItem
                             icon="badge"
-                            label="Student ID"
-                            value={profile.studentId}
+                            label="Username"
+                            value={profile.username}
                         />
                         <ProfileInfoItem
                             icon="calendar-today"
-                            label="Joined"
-                            value={profile.joinDate}
+                            label="Batch"
+                            value={profile.batch}
                         />
                         <ProfileInfoItem
                             icon="person"
@@ -300,14 +300,9 @@ export default function SchoolDashboard() {
                             value={`${profile.age} years`}
                         />
                         <ProfileInfoItem
-                            icon="family-restroom"
-                            label="Guardian"
-                            value={profile.guardianName}
-                        />
-                        <ProfileInfoItem
                             icon="phone"
                             label="Contact"
-                            value={profile.contactNumber}
+                            value={profile.phone}
                         />
                         <ProfileInfoItem
                             icon="location-on"
@@ -315,14 +310,14 @@ export default function SchoolDashboard() {
                             value={profile.address}
                         />
                         <ProfileInfoItem
-                            icon="water-drop"
-                            label="Blood Group"
-                            value={profile.bloodGroup}
-                        />
-                        <ProfileInfoItem
                             icon="emergency"
                             label="Emergency Contact"
                             value={profile.emergencyContact}
+                        />
+                        <ProfileInfoItem
+                            icon="email"
+                            label="Email"
+                            value={profile.email}
                         />
                     </ScrollView>
 
@@ -579,7 +574,7 @@ export default function SchoolDashboard() {
                     <ThemedText
                         style={[styles.welcomeText, { color: COLORS.text }]}
                     >
-                        Hello, Vishwajeet!
+                        Hello, {profile.name}!
                     </ThemedText>
                     <ThemedText
                         style={[styles.subtitle, { color: COLORS.textLight }]}
